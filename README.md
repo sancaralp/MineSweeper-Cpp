@@ -1,0 +1,1 @@
+Open cmake-build-debug\MineSweeper.exe to play, only executable on Windows.
