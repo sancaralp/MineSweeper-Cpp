@@ -6,10 +6,16 @@
 #include <windows.h>
 #include <ctime>
 
+
 using std::vector;
 using std::cin; using std::cout;
 using std::string;
 using std::stringstream;
+
+#define ADDREDCLRTOSTR(strOrigin, strAddition) strOrigin+=string("\033[31m") + (strAddition) + string("\033[37m");
+#define ADDCYANCLRTOSTR(strOrigin, strAddition) strOrigin+=string("\033[36m") + (strAddition) + string("\033[37m");
+#define ADDGREENCLRTOSTR(strOrigin, strAddition) strOrigin+=string("\033[32m") + (strAddition) + string("\033[37m");
+
 
 class MineSweeper {
 private:
@@ -43,7 +49,7 @@ private:
 
         }
     }
-    void setFinalCanvas(const MineSweeper *game, string& finalText) {
+    static void setFinalCanvas(const MineSweeper *game, string& finalText) {
         string outputCanvas;
         cout<<std::flush;
         system("CLS");
@@ -56,7 +62,17 @@ private:
             outputCanvas.push_back('#');
             outputCanvas.push_back(' ');
             for (int x = 0; x < game->canvas[0].size(); x++) {
-                outputCanvas.push_back(game->canvas[y][x]);
+                if(game->canvas[y][x]=='F')
+                    ADDREDCLRTOSTR(outputCanvas, game->canvas[y][x])
+
+                else if(game->canvas[y][x]=='*')
+                    ADDGREENCLRTOSTR(outputCanvas,game->canvas[y][x])
+
+                else if(game->canvas[y][x]!='-'&&game->canvas[y][x]!=' ')
+                    ADDCYANCLRTOSTR(outputCanvas, game->canvas[y][x])
+
+                else
+                    outputCanvas.push_back(game->canvas[y][x]);
                 outputCanvas.push_back(' ');
             }
             outputCanvas.push_back('#');
@@ -70,7 +86,6 @@ private:
         outputCanvas.push_back('\n');
 
         cout << outputCanvas << finalText;
-
     }
 
     void openZero(int currRow, int currCol) {
@@ -95,11 +110,13 @@ private:
                 if(mines[i][j]) canvas[i][j] = '*';
             }
         }
-        string outputSt =" __   _____  _   _   _    ___  ___ _____ _ \n"
-                         " \\ \\ / / _ \\| | | | | |  / _ \\/ __|_   _| |\n"
-                         "  \\ V / (_) | |_| | | |_| (_) \\__ \\ | | |_|\n"
-                         "   |_| \\___/ \\___/  |____\\___/|___/ |_| (_)\n"
-                         "                                           ";
+        string outputSt;
+        string lost =" __   _____  _   _   _    ___  ___ _____ _ \n"
+                     " \\ \\ / / _ \\| | | | | |  / _ \\/ __|_   _| |\n"
+                     "  \\ V / (_) | |_| | | |_| (_) \\__ \\ | | |_|\n"
+                     "   |_| \\___/ \\___/  |____\\___/|___/ |_| (_)\n"
+                     "                                           ";
+        ADDREDCLRTOSTR(outputSt,lost);
 
 
         setFinalCanvas(this,outputSt);
@@ -107,12 +124,14 @@ private:
 
     void Win() {
         isGameOver = true;
-        string outputSt =
+        string won =
                 " __   _____  _   _  __      _____  _  _ _ \n"
                 " \\ \\ / / _ \\| | | | \\ \\    / / _ \\| \\| | |\n"
                 "  \\ V / (_) | |_| |  \\ \\/\\/ / (_) | .` |_|\n"
                 "   |_| \\___/ \\___/    \\_/\\_/ \\___/|_|\\_(_)\n"
                 "                                          ";
+        string outputSt;
+        ADDGREENCLRTOSTR(outputSt, won);
         setFinalCanvas(this,outputSt);
     }
 
@@ -246,15 +265,15 @@ void Loop() {
     }
 }
 void StartLoop(){
-    string outpArr[5];
+    string outpArr[6];
     outpArr[0]="Enter difficulty:\n";
-    outpArr[1]=">Easy\n";
-    outpArr[2]=" Normal\n";
-    outpArr[3]=" Hard\n";
-    outpArr[4]=" Very Hard\n";
+    outpArr[1]=">\033[36mEasy\n";
+    outpArr[2]=" \033[32mNormal\n";
+    outpArr[3]=" \033[33mHard\n";
+    outpArr[4]=" \033[31mVery Hard\n";
+    outpArr[5]=" \033[35mCustom\n";
 
-    outputCanvas = ">Easy\nNormal\nHard\nVery Hard\n";
-    outputCanvas += "\n\n Use arrow keys to move around, space to reveal the tile and F to Flag the tile.";
+
 
     int x, y, c;
     short difficulty =0;
@@ -264,20 +283,13 @@ void StartLoop(){
         std::this_thread::sleep_for(std::chrono::milliseconds(200));
         Input();
         switch (rotation) {
-
-            case STOP:
-                break;
-            case RIGHT:
-                break;
-            case LEFT:
-                break;
             case UP:
                 if(difficulty>0)difficulty--;
                 rotation = STOP;
                 moved = true;
                 break;
             case DOWN:
-                if(difficulty<3)difficulty++;
+                if(difficulty<4)difficulty++;
                 rotation = STOP;
                 moved = true;
                 break;
@@ -285,19 +297,19 @@ void StartLoop(){
                 difficultyChosen=true;
                 rotation = STOP;
                 break;
-            case FLAG:
+            default:
                 break;
         }
         if(moved) {
-            for (int i = 1; i < 5; i++) {
+            for (int i = 1; i < 6; i++) {
                 if (outpArr[i][0] == '>') outpArr[i][0] = ' ';
             }
             outpArr[difficulty + 1][0] = '>';
             outputCanvas.clear();
-            for (int i = 1; i < 5; i++) {
-                outputCanvas += outpArr[i];
+            for (auto & i : outpArr) {
+                outputCanvas += i;
             }
-            outputCanvas += "\n\n Use arrow keys to move around, space to reveal the tile and F to Flag the tile";
+            outputCanvas += "\n\n \033[37mUse arrow keys to move around, space to reveal the tile and F to Flag the tile";
             cout << std::flush;
             system("CLS");
             cout << outputCanvas;
@@ -314,8 +326,23 @@ void StartLoop(){
         case 2:
             x = 24, y = 16, c = 70;
             break;
-        default:
+        case 3:
             x = 24, y = 20, c = 99;
+            break;
+        default:
+            cout << std::flush;
+            system("CLS");
+            cout << "Please Enter The Number of Rows: ";
+            cout << "\033[36m";
+            cin >> x;
+            cout << "\033[37m";
+
+            cout << "Please Enter The Number of Columns: ";
+            cout << "\033[36m";
+            cin >> y;
+            cout << "\033[37m";
+
+            c = x*y/5;
             break;
     }
     game = new MineSweeper(x, y, c);
@@ -346,7 +373,13 @@ void setCanvas(string &outputCanvas, const MineSweeper *game) {
         else
             outputCanvas.push_back(' ');
         for (int x = 0; x < game->canvas[0].size(); x++) {
-            outputCanvas.push_back(game->canvas[y][x]);
+            if(game->canvas[y][x]=='F')
+                ADDREDCLRTOSTR(outputCanvas, game->canvas[y][x])
+            else if(game->canvas[y][x]!='-'&&game->canvas[y][x]!=' ')
+                ADDCYANCLRTOSTR(outputCanvas, game->canvas[y][x])
+            else
+                outputCanvas.push_back(game->canvas[y][x]);
+
             if (x == cursorX - 1 && y == cursorY)
                 outputCanvas.push_back('[');
             else if (x == cursorX && y == cursorY)
